@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a3a2a">
+<meta name="description" content="Caderno pessoal para anotar, ouvir e revisar o que estou aprendendo em espanhol.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Espanhol">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Caderno de Espanhol</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme:light;
+  --verde:#1a3a2a; --verde-m:#2d5a3d; --verde-c:#4a7c5f;
+  --dourado:#c9a84c; --dourado-c:#e8c97a;
+  --creme:#f5f0e8; --creme-e:#e0d8c8; --branco:#fdfaf5;
+  --texto:#1a2420; --texto-s:#6a7a70;
+  --rosa:#d4756a; --azul:#5a8ab0;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--branco);color:var(--texto);min-height:100vh;overflow-x:hidden;}
+button,input,select,textarea{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--texto);}
+
+/* HEADER */
+.hdr{background:linear-gradient(165deg,#0f2219 0%,var(--verde-m) 100%);padding:calc(40px + env(safe-area-inset-top,0px)) 20px 30px;text-align:center;position:relative;overflow:hidden;}
+.hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:24px;background:var(--branco);border-radius:24px 24px 0 0;}
+.hdr-orb{position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.1) 0%,transparent 70%);top:-60px;left:50%;transform:translateX(-50%);pointer-events:none;}
+.hdr-date{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--dourado);margin-bottom:4px;opacity:.8;}
+.hdr-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--creme);}
+.hdr-title em{font-style:italic;color:var(--dourado-c);}
+.hdr-sum{font-size:12px;color:rgba(245,240,232,.65);margin-top:6px;}
+
+/* CONTENT / TABS */
+.content{max-width:720px;margin:0 auto;padding:6px 16px 100px;}
+.tabs{display:flex;gap:7px;margin-bottom:18px;overflow-x:auto;padding:2px 0;scrollbar-width:none;position:sticky;top:env(safe-area-inset-top,0px);background:var(--branco);z-index:5;padding-top:10px;padding-bottom:8px;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:8px 16px;border-radius:20px;border:1.5px solid var(--creme-e);background:white;font-size:13px;color:var(--texto-s);cursor:pointer;white-space:nowrap;font-weight:500;}
+.tab.active{background:var(--verde);border-color:var(--verde);color:var(--dourado);}
+.tab .n{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--rosa);color:white;font-size:11px;line-height:18px;}
+
+/* CARDS */
+.card{background:var(--creme);border-radius:16px;padding:16px;margin-bottom:12px;}
+.card.white{background:white;border:1px solid var(--creme-e);}
+.sec-t{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--verde);margin:6px 2px 4px;}
+.sec-s{font-size:12px;color:var(--texto-s);margin:0 2px 14px;line-height:1.5;}
+.muted{color:var(--texto-s);font-size:12px;}
+.empty{text-align:center;padding:30px 10px;color:var(--texto-s);font-size:13px;line-height:1.6;}
+
+/* FORM */
+.inp,textarea.inp{width:100%;padding:9px 11px;border:1.5px solid var(--creme-e);border-radius:10px;background:white;outline:none;min-width:0;}
+.inp:focus{border-color:var(--verde-c);}
+textarea.inp{min-height:70px;resize:vertical;line-height:1.5;}
+.lbl{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--texto-s);margin:12px 0 5px;display:block;}
+.lbl:first-child{margin-top:0;}
+.row{display:flex;gap:8px;align-items:center;}
+.row.wrap{flex-wrap:wrap;}
+.btn{padding:9px 16px;background:var(--verde);color:var(--dourado);border:none;border-radius:10px;font-size:13px;cursor:pointer;font-weight:500;white-space:nowrap;}
+.btn.sec{background:white;color:var(--verde);border:1.5px solid var(--creme-e);}
+.btn.danger{background:white;color:var(--rosa);border:1.5px solid rgba(212,117,106,.4);}
+.btn.sm{padding:6px 11px;font-size:12px;}
+.btn.big{padding:13px 18px;font-size:15px;flex:1;}
+.acentos{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
+.acentos button{width:34px;height:32px;border-radius:8px;border:1px solid var(--creme-e);background:white;cursor:pointer;font-size:15px;color:var(--verde);}
+
+/* CADERNO */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px;}
+.fchip{padding:6px 12px;border-radius:16px;border:1.5px solid var(--creme-e);background:white;font-size:12px;cursor:pointer;color:var(--texto-s);}
+.fchip.active{background:var(--verde);border-color:var(--verde);color:var(--dourado);}
+.item{background:white;border:1px solid var(--creme-e);border-radius:12px;padding:12px;margin-bottom:8px;}
+.item-top{display:flex;align-items:flex-start;gap:8px;}
+.item .es{font-size:16px;font-weight:600;color:var(--verde);line-height:1.3;}
+.item .pt{font-size:14px;margin-top:2px;line-height:1.4;}
+.item .ex{font-size:13px;font-style:italic;color:var(--texto-s);margin-top:6px;line-height:1.4;}
+.item .nota{font-size:12px;color:var(--texto-s);margin-top:6px;background:var(--creme);border-radius:8px;padding:6px 9px;line-height:1.45;white-space:pre-wrap;}
+.item-meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.chip{font-size:11px;padding:3px 9px;border-radius:12px;background:var(--creme);color:var(--texto-s);white-space:nowrap;}
+.nivel{display:flex;gap:3px;}
+.nivel i{width:7px;height:7px;border-radius:50%;background:var(--creme-e);}
+.nivel i.on{background:var(--verde-c);}
+.ico{width:32px;height:32px;border-radius:50%;border:1px solid var(--creme-e);background:white;cursor:pointer;flex-shrink:0;font-size:14px;line-height:1;color:var(--texto-s);}
+.ico.mic{width:38px;height:38px;font-size:16px;}
+.btn.play.on{background:var(--verde-c);border-color:var(--verde-c);color:white;}
+.frase-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.res{font-size:14px;margin-top:10px;line-height:1.6;}
+.res .w{padding:1px 3px;border-radius:5px;}
+.res .w.ok{background:rgba(74,124,95,.14);color:var(--verde-m);}
+.res .w.no{background:rgba(212,117,106,.16);color:#9a4a40;}
+.ico.mic.on,.btn.mic.on{background:var(--rosa);border-color:var(--rosa);color:white;animation:pulsa 1.2s infinite;}
+@keyframes pulsa{0%{box-shadow:0 0 0 0 rgba(212,117,106,.5);}70%{box-shadow:0 0 0 10px rgba(212,117,106,0);}100%{box-shadow:0 0 0 0 rgba(212,117,106,0);}}
+.campo{display:flex;gap:8px;align-items:flex-start;}
+
+/* REVISAR */
+.flash{background:white;border:1px solid var(--creme-e);border-radius:20px;padding:28px 20px;text-align:center;min-height:220px;display:flex;flex-direction:column;justify-content:center;gap:10px;margin-bottom:12px;}
+.flash .lado{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dourado);}
+.flash .frente{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--verde);line-height:1.15;word-break:break-word;}
+.flash .verso{border-top:1px solid var(--creme-e);padding-top:14px;margin-top:6px;}
+.flash .verso .resp{font-size:19px;font-weight:500;line-height:1.35;}
+.flash .ex{font-size:13px;font-style:italic;color:var(--texto-s);margin-top:8px;line-height:1.45;}
+.flash .ouvido{font-size:13px;margin-top:10px;padding:7px 10px;border-radius:10px;display:inline-block;}
+.flash .ouvido.ok{background:rgba(74,124,95,.12);color:var(--verde-m);}
+.flash .ouvido.no{background:rgba(212,117,106,.12);color:#9a4a40;}
+.flash .nota{font-size:12px;color:var(--texto-s);margin-top:8px;white-space:pre-wrap;line-height:1.45;}
+.prog{height:6px;background:var(--creme);border-radius:3px;overflow:hidden;margin-bottom:12px;}
+.prog div{height:100%;background:var(--verde-c);transition:width .3s;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.stat{background:var(--creme);border-radius:12px;padding:12px 8px;text-align:center;}
+.stat b{display:block;font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--verde);font-weight:600;line-height:1;}
+.stat span{font-size:11px;color:var(--texto-s);}
+.seg{display:flex;border:1.5px solid var(--creme-e);border-radius:10px;overflow:hidden;}
+.seg button{flex:1;padding:8px 10px;border:none;background:white;cursor:pointer;font-size:12px;color:var(--texto-s);}
+.seg button.active{background:var(--verde);color:var(--dourado);}
+
+.modal-bg{position:fixed;inset:0;background:rgba(15,34,25,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:900;}
+.modal{background:var(--branco);border-radius:18px;padding:20px;width:100%;max-width:420px;box-shadow:0 10px 40px rgba(0,0,0,.25);}
+.modal p{font-size:14px;line-height:1.5;margin-bottom:14px;}
+.modal textarea{min-height:160px;font-size:12px;}
+.modal .row{justify-content:flex-end;margin-top:12px;}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--verde);color:var(--dourado);padding:10px 22px;border-radius:28px;font-size:13px;z-index:1000;transition:transform .4s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div id="modal"></div>
+
+<div class="hdr">
+  <div class="hdr-orb"></div>
+  <div class="hdr-date">aprendendo</div>
+  <div class="hdr-title">Caderno de <em>Espanhol</em></div>
+  <div class="hdr-sum" id="hdrSum"></div>
+</div>
+
+<div class="content">
+  <div class="tabs" id="tabs"></div>
+  <div id="page"></div>
+</div>
+
+<script>
+/* ============================================================
+   CONSTANTES
+   ============================================================ */
+const KEY = 'espanhol_v1';
+const CATS = ['Vocabulário','Expressão','Verbo','Gramática','Frase'];
+// dias até a próxima revisão para cada nível (0 = nova ou errada)
+const INTERVALOS = [1,1,3,7,14,30,60];
+const NIVEL_MAX = INTERVALOS.length-1;
+const PAGES = [['caderno','Caderno'],['frases','Frases'],['revisar','Revisar'],['adicionar','+ Anotar'],['ajustes','Ajustes']];
+
+function dadosPadrao(){ return {versao:1, itens:[], frases:[], importadas:[], config:{sentido:'es-pt'}}; }
+
+/* ============================================================
+   ANOTAÇÕES DITADAS NO CHAT
+   entram no caderno uma única vez (pelo id); se forem excluídas, não voltam
+   ============================================================ */
+const DO_CHAT = [
+  {id:'chat_listo', cat:'Expressão', es:'estar listo / lista', pt:'estar pronto / pronta',
+   ex:'La cena está lista.', nota:'Cuidado: ser listo = ser esperto, inteligente.\nEx.: Mi hija es muy lista.'},
+  {id:'chat_pronto', cat:'Vocabulário', es:'pronto', pt:'logo / em breve / cedo',
+   ex:'Nos vemos pronto.', nota:'Falso amigo! Em espanhol “pronto” NÃO é o nosso pronto (esse é “listo”).\nHasta pronto = até logo · De pronto = de repente'},
+  {id:'chat_tan_pronto', cat:'Expressão', es:'¿tan pronto?', pt:'tão cedo? / já?',
+   ex:'¿Ya te vas? ¡Tan pronto!', nota:'É “tan pronto”, não “está pronto”.'},
+  {id:'chat_tan_pronto_como', cat:'Expressão', es:'tan pronto como', pt:'assim que',
+   ex:'Te llamo tan pronto como llegue.', nota:'Falando do futuro, o verbo depois vai no subjuntivo: tan pronto como llegue = assim que eu chegar.'},
+];
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+let D, page='caderno', ED=null, EDF=null, busca='', filtroCat='todas', R=null;
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY));
+    D = (s && Array.isArray(s.itens)) ? s : dadosPadrao();
+  }catch(e){ D = dadosPadrao(); }
+  D.config = Object.assign(dadosPadrao().config, D.config||{});
+  D.frases = D.frases||[];
+  D.importadas = D.importadas||[];
+  const novas = DO_CHAT.filter(c=>!D.importadas.includes(c.id));
+  novas.forEach(c=>{ D.itens.push(Object.assign(novoItem(c.es,c.pt,c.ex,c.nota,c.cat),{id:c.id})); D.importadas.push(c.id); });
+  if(novas.length) save();
+  try{ const pg = localStorage.getItem(KEY+'_page'); if(pg && PAGES.some(x=>x[0]===pg)) page = pg; }catch(e){}
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(D)); }catch(e){ toast('Não consegui salvar no navegador'); }
+}
+function item(id){ return D.itens.find(i=>i.id===id); }
+
+/* ============================================================
+   UTILITÁRIOS
+   ============================================================ */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function hoje(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function somaDias(iso,n){
+  const [a,m,d]=iso.split('-').map(Number); const dt=new Date(a,m-1,d+n);
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+function fmtData(iso){
+  if(iso<=hoje()) return 'hoje';
+  if(iso===somaDias(hoje(),1)) return 'amanhã';
+  const [a,m,d]=iso.split('-').map(Number);
+  return new Date(a,m-1,d).toLocaleDateString('pt-BR',{day:'numeric',month:'short'});
+}
+function paraHoje(){ const h=hoje(); return D.itens.filter(i=>i.prox<=h); }
+function embaralhar(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function sem(s){ return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+// sem acento, pontuação e maiúsculas, para comparar o que foi falado
+function limpa(s){ return sem(s).replace(/[¿?¡!.,;:"“”()]/g,' ').replace(/\s+/g,' ').trim(); }
+
+function fecharModal(){ document.getElementById('modal').innerHTML=''; }
+let _modalOk=null;
+function pedir(msg,ok,txtOk){
+  _modalOk=ok;
+  document.getElementById('modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)fecharModal()"><div class="modal"><p>${esc(msg)}</p>
+    <div class="row"><button class="btn sec" onclick="fecharModal()">Cancelar</button><button class="btn" onclick="const f=_modalOk;fecharModal();f()">${esc(txtOk||'Confirmar')}</button></div></div></div>`;
+}
+function caixaTexto(titulo,texto,ok,txtOk){
+  _modalOk=ok;
+  document.getElementById('modal').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)fecharModal()"><div class="modal"><p>${esc(titulo)}</p>
+    <textarea class="inp" id="modalTxt">${esc(texto||'')}</textarea>
+    <div class="row"><button class="btn sec" onclick="fecharModal()">Fechar</button>${ok?`<button class="btn" onclick="const v=document.getElementById('modalTxt').value;const f=_modalOk;fecharModal();f(v)">${esc(txtOk||'OK')}</button>`:''}</div></div></div>`;
+  const ta=document.getElementById('modalTxt'); if(!ok){ ta.focus(); ta.select(); }
+}
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function copiar(t,msg){
+  const manual=()=>caixaTexto('Selecione e copie o texto abaixo:',t);
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>toast(msg),manual);
+    else manual();
+  }catch(e){ manual(); }
+}
+// voz em espanhol da Espanha (es-ES); se o aparelho não tiver, usa outra voz em espanhol
+function vozES(){
+  const vs=speechSynthesis.getVoices(), lg=v=>v.lang.replace('_','-').toLowerCase();
+  return vs.find(v=>lg(v)==='es-es') || vs.find(v=>lg(v).startsWith('es'));
+}
+function temVozEspanha(){ return 'speechSynthesis' in window && speechSynthesis.getVoices().some(v=>v.lang.replace('_','-').toLowerCase()==='es-es'); }
+function falar(t, devagar, btn, emFila){
+  if(!('speechSynthesis' in window)){ toast('Este navegador não fala 😕'); return; }
+  if(!emFila) speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(t); u.lang='es-ES'; u.rate=devagar?.6:.9;
+  const v=vozES(); if(v) u.voice=v;
+  if(btn){ btn.classList.add('on'); u.onend=u.onerror=()=>btn.classList.remove('on'); }
+  speechSynthesis.speak(u);
+}
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let _rec=null;
+// escuta uma fala e chama aoOuvir(texto, final) a cada trecho reconhecido
+function ouvir(lang, btn, aoOuvir){
+  if(!SR){ toast('Este navegador não reconhece voz 😕'); return; }
+  if(_rec){ const era=_rec._btn; _rec.stop(); if(era===btn) return; }
+  const r=new SR(); r.lang=lang; r.interimResults=true; r.continuous=false; r.maxAlternatives=1;
+  r._btn=btn; _rec=r; if(btn) btn.classList.add('on');
+  r.onresult=e=>{
+    let t=''; for(let k=0;k<e.results.length;k++) t+=e.results[k][0].transcript;
+    aoOuvir(t.trim(), e.results[e.results.length-1].isFinal);
+  };
+  r.onerror=e=>{
+    if(e.error==='not-allowed'||e.error==='service-not-allowed') toast('Permita o uso do microfone 🎤');
+    else if(e.error==='no-speech') toast('Não ouvi nada, tente de novo');
+    else if(e.error!=='aborted') toast('Não consegui ouvir ('+e.error+')');
+  };
+  r.onend=()=>{ if(btn) btn.classList.remove('on'); if(_rec===r) _rec=null; };
+  try{ r.start(); }catch(e){ r.onend(); toast('Não consegui ligar o microfone'); }
+}
+function ditar(campo, lang, btn){
+  const el=document.getElementById('f_'+campo);
+  const base=el.value.trim();
+  ouvir(lang, btn, t=>{ el.value = base ? base+' '+t : t; });
+}
+function micBtn(campo, lang){ return SR ? `<button type="button" class="ico mic" title="Falar" onclick="ditar('${campo}','${lang}',this)">🎤</button>` : ''; }
+function falarItem(id){ const i=item(id); if(i) falar(i.es); }
+function nivelHtml(n){ let h='<span class="nivel" title="nível '+n+' de '+NIVEL_MAX+'">'; for(let k=1;k<=NIVEL_MAX;k++) h+=`<i class="${k<=n?'on':''}"></i>`; return h+'</span>'; }
+
+/* ============================================================
+   RENDER — NAVEGAÇÃO
+   ============================================================ */
+function go(p){ if(_rec) _rec.abort(); if('speechSynthesis' in window) speechSynthesis.cancel(); page=p; if(p!=='adicionar') ED=null; if(p!=='frases') EDF=null; if(p!=='revisar') R=null; try{localStorage.setItem(KEY+'_page',p);}catch(e){} render(); window.scrollTo({top:0}); }
+function render(){
+  const due=paraHoje().length;
+  document.getElementById('tabs').innerHTML = PAGES.map(([id,nm])=>`<button class="tab ${page===id?'active':''}" onclick="go('${id}')">${id==='adicionar'&&ED?'Editar':nm}${id==='revisar'&&due?`<span class="n">${due}</span>`:''}</button>`).join('');
+  const n=D.itens.length;
+  document.getElementById('hdrSum').textContent = n ? `${n} anotaç${n>1?'ões':'ão'} · ${due?due+' para revisar hoje':'revisão em dia ✓'}` : 'comece anotando o que aprendeu';
+  const fn={caderno:pgCaderno,frases:pgFrases,revisar:pgRevisar,adicionar:pgAdicionar,ajustes:pgAjustes}[page];
+  document.getElementById('page').innerHTML=fn();
+  if(page==='adicionar' && !ED) setTimeout(()=>{ const e=document.getElementById('f_es'); if(e && matchMedia('(hover:hover)').matches) e.focus(); },0);
+}
+
+/* ============================================================
+   PÁGINA: CADERNO
+   ============================================================ */
+function pgCaderno(){
+  if(!D.itens.length) return `<div class="empty">Seu caderno ainda está vazio.<br>Anote uma palavra, expressão ou regra que você aprendeu para revisar depois.<br><br>
+    <button class="btn" onclick="go('adicionar')">+ Anotar a primeira</button></div>`;
+  const cats=CATS.filter(c=>D.itens.some(i=>i.cat===c));
+  return `<input class="inp" id="busca" placeholder="🔎 Buscar em espanhol ou português…" value="${esc(busca)}" oninput="busca=this.value;renderLista()">
+  ${cats.length>1?`<div class="filters">${['todas',...cats].map(c=>`<button class="fchip ${filtroCat===c?'active':''}" onclick="filtroCat='${c}';render()">${c==='todas'?'Todas':c}</button>`).join('')}</div>`:'<div style="height:12px"></div>'}
+  <div id="lista">${listaHtml()}</div>`;
+}
+function renderLista(){ document.getElementById('lista').innerHTML=listaHtml(); }
+function listaHtml(){
+  const q=sem(busca.trim());
+  const lista=D.itens
+    .filter(i=>filtroCat==='todas'||i.cat===filtroCat)
+    .filter(i=>!q||sem([i.es,i.pt,i.ex,i.nota].join(' ')).includes(q))
+    .sort((a,b)=>b.criado.localeCompare(a.criado));
+  if(!lista.length) return `<div class="empty">Nada encontrado.</div>`;
+  return lista.map(i=>`<div class="item">
+    <div class="item-top">
+      <div style="flex:1;min-width:0">
+        <div class="es">${esc(i.es)}</div>
+        <div class="pt">${esc(i.pt)}</div>
+      </div>
+      <button class="ico" onclick="falarItem('${i.id}')" title="Ouvir">🔊</button>
+      <button class="ico" onclick="editar('${i.id}')" title="Editar">✎</button>
+    </div>
+    ${i.ex?`<div class="ex">“${esc(i.ex)}”</div>`:''}
+    ${i.nota?`<div class="nota">${esc(i.nota)}</div>`:''}
+    <div class="item-meta">${i.cat?`<span class="chip">${esc(i.cat)}</span>`:''}${nivelHtml(i.nivel)}<span class="muted" style="margin-left:auto">revisar ${fmtData(i.prox)}</span></div>
+  </div>`).join('');
+}
+
+/* ============================================================
+   PÁGINA: FRASES PARA TREINAR
+   ============================================================ */
+function pgFrases(){
+  const f = EDF ? D.frases.find(x=>x.id===EDF) : {es:'',pt:''};
+  let h=`<div class="sec-t">Frases para treinar</div>
+  <div class="sec-s">Escreva ou dite as frases que quer treinar. Toque em <b>▶ Ouvir</b> para escutar com o sotaque da Espanha, <b>🐢</b> para ouvir devagar e <b>🎤 Falar</b> para repetir e ver se entendi tudo.</div>
+  <div class="card white">
+    <label class="lbl">Frase em espanhol</label>
+    <div class="campo"><textarea class="inp" id="f_fes" placeholder="ex.: ¿Me puedes ayudar, por favor?" onfocus="ultimo=this" autocapitalize="sentences">${esc(f.es)}</textarea>${micBtn('fes','es-ES')}</div>
+    <label class="lbl">Tradução (opcional)</label>
+    <div class="campo"><input class="inp" id="f_fpt" value="${esc(f.pt)}" placeholder="ex.: Você pode me ajudar, por favor?" onfocus="ultimo=this">${micBtn('fpt','pt-BR')}</div>
+    <div class="acentos">${['á','é','í','ó','ú','ñ','ü','¿','¡'].map(c=>`<button type="button" onmousedown="event.preventDefault()" onclick="inserir('${c}')">${c}</button>`).join('')}</div>
+    <div class="row wrap" style="margin-top:14px">
+      <button class="btn" onclick="salvarFrase()">${EDF?'Salvar':'Adicionar frase'}</button>
+      <button class="btn sec play" onclick="const t=document.getElementById('f_fes').value.trim(); if(t) falar(t,false,this); else toast('Escreva a frase primeiro')">▶ Ouvir</button>
+      ${EDF?`<button class="btn sec" onclick="EDF=null;render()">Cancelar</button><button class="btn danger" style="margin-left:auto" onclick="excluirFrase('${EDF}')">Excluir</button>`:''}
+    </div>
+  </div>`;
+  h+=`<div class="sec-s" id="avisoVoz">${avisoVoz()}</div>`;
+  if(!D.frases.length) return h+`<div class="empty">Nenhuma frase ainda.</div>`;
+  h+=`<div class="row" style="margin:18px 2px 10px"><div class="muted">${D.frases.length} frase${D.frases.length>1?'s':''}</div>
+    <button class="btn sec sm play" style="margin-left:auto" onclick="ouvirTodas(this)">▶ Ouvir todas</button></div>`;
+  h+=D.frases.slice().sort((a,b)=>b.criado.localeCompare(a.criado)).map(f=>`<div class="item">
+    <div class="item-top">
+      <div style="flex:1;min-width:0"><div class="es">${esc(f.es)}</div>${f.pt?`<div class="pt">${esc(f.pt)}</div>`:''}</div>
+      <button class="ico" onclick="editarFrase('${f.id}')" title="Editar">✎</button>
+    </div>
+    <div class="frase-acoes">
+      <button class="btn sm play" onclick="falarFrase('${f.id}',false,this)">▶ Ouvir</button>
+      <button class="btn sec sm play" onclick="falarFrase('${f.id}',true,this)">🐢 Devagar</button>
+      ${SR?`<button class="btn sec sm mic" onclick="treinarFrase('${f.id}',this)">🎤 Falar</button>`:''}
+    </div>
+    <div class="res" id="res_${f.id}"></div>
+  </div>`).join('');
+  return h;
+}
+function avisoVoz(){
+  return 'speechSynthesis' in window && speechSynthesis.getVoices().length && !temVozEspanha()
+    ? '⚠️ Este aparelho não tem voz da Espanha instalada, então vou usar outra voz em espanhol. No iPhone: Ajustes › Acessibilidade › Conteúdo Falado › Vozes › Espanhol › Espanha.' : '';
+}
+function frase(id){ return D.frases.find(f=>f.id===id); }
+function falarFrase(id,devagar,btn){ const f=frase(id); if(f) falar(f.es,devagar,btn); }
+function ouvirTodas(btn){
+  speechSynthesis.cancel();
+  const lista=D.frases.slice().sort((a,b)=>b.criado.localeCompare(a.criado));
+  lista.forEach((f,k)=>falar(f.es,false,k===lista.length-1?btn:null,true));
+  btn.classList.add('on');
+}
+function salvarFrase(){
+  const es=document.getElementById('f_fes').value.trim(), pt=document.getElementById('f_fpt').value.trim();
+  if(!es){ toast('Escreva ou dite a frase em espanhol'); return; }
+  if(EDF){ Object.assign(frase(EDF),{es,pt}); EDF=null; toast('Frase atualizada ✓'); }
+  else{ D.frases.push({id:uid(),es,pt,criado:new Date().toISOString()}); toast('Frase adicionada ✓'); }
+  save(); render();
+}
+function editarFrase(id){ EDF=id; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function excluirFrase(id){
+  pedir('Excluir esta frase?',()=>{ D.frases=D.frases.filter(f=>f.id!==id); EDF=null; save(); render(); toast('Excluída'); },'Excluir');
+}
+// ouve a pessoa repetindo a frase e marca as palavras que reconheceu (verde) ou não (vermelho)
+function treinarFrase(id,btn){
+  const f=frase(id), res=document.getElementById('res_'+id);
+  ouvir('es-ES', btn, (t,final)=>{
+    if(!final){ res.innerHTML=`<span class="muted">🎤 ${esc(t)}</span>`; return; }
+    const ditas=limpa(t).split(' ');
+    const alvo=f.es.split(/\s+/).filter(w=>limpa(w));
+    const ok=alvo.map(w=>{ const k=ditas.indexOf(limpa(w)); if(k>=0) ditas.splice(k,1); return k>=0; });
+    const marcadas=alvo.map((w,k)=>`<span class="w ${ok[k]?'ok':'no'}">${esc(w)}</span>`);
+    const certas=ok.filter(Boolean).length;
+    res.innerHTML = (certas===alvo.length ? '<b style="color:var(--verde-m)">¡Perfecto! 🎉</b><br>' : `<span class="muted">Entendi ${certas} de ${alvo.length} palavras. Em vermelho, o que não reconheci:</span><br>`)
+      + marcadas.join(' ') + `<div class="muted" style="margin-top:4px">Você disse: “${esc(t)}”</div>`;
+  });
+}
+
+/* ============================================================
+   PÁGINA: REVISAR
+   ============================================================ */
+function iniciar(treino){
+  const base = treino ? D.itens.slice() : paraHoje();
+  R={fila:embaralhar(base.map(i=>i.id)), pos:0, aberto:false, ouvido:null, treino, vistos:{}, certas:0, erros:0, total:base.length};
+  render();
+}
+function pgRevisar(){
+  if(!D.itens.length) return `<div class="empty">Anote algumas coisas primeiro e depois volte aqui para revisar.<br><br><button class="btn" onclick="go('adicionar')">+ Anotar</button></div>`;
+  const S=D.config.sentido;
+  const seg=`<div class="seg" style="margin-bottom:14px">
+    <button class="${S==='es-pt'?'active':''}" onclick="setSentido('es-pt')">Espanhol → Português</button>
+    <button class="${S==='pt-es'?'active':''}" onclick="setSentido('pt-es')">Português → Espanhol</button></div>`;
+
+  if(!R){
+    const due=paraHoje().length;
+    const dominadas=D.itens.filter(i=>i.nivel>=5).length;
+    let h=`<div class="stats">
+      <div class="stat"><b>${due}</b><span>para hoje</span></div>
+      <div class="stat"><b>${D.itens.length}</b><span>no caderno</span></div>
+      <div class="stat"><b>${dominadas}</b><span>dominadas</span></div></div>${seg}`;
+    if(due) h+=`<button class="btn big" style="width:100%" onclick="iniciar(false)">Revisar ${due} agora</button>`;
+    else{
+      const prox=D.itens.map(i=>i.prox).sort()[0];
+      h+=`<div class="card" style="text-align:center"><div class="sec-t" style="margin:0">Tudo em dia 🎉</div>
+        <div class="muted" style="margin-top:4px">Próxima revisão: ${fmtData(prox)}</div></div>
+        <button class="btn sec big" style="width:100%" onclick="iniciar(true)">Treinar tudo mesmo assim</button>
+        <div class="muted" style="margin-top:8px;text-align:center">No treino livre as datas de revisão não mudam.</div>`;
+    }
+    return h;
+  }
+
+  if(R.pos>=R.fila.length){
+    return `<div class="card" style="text-align:center;padding:26px 16px">
+      <div class="sec-t" style="margin:0">¡Muy bien! 🎉</div>
+      <div class="muted" style="margin-top:6px">${R.total} revisada${R.total>1?'s':''} · ${R.certas} de primeira${R.erros?` · ${R.erros} para reforçar`:''}</div></div>
+      <div class="row"><button class="btn big" onclick="R=null;render()">Concluir</button></div>`;
+  }
+
+  const i=item(R.fila[R.pos]);
+  if(!i){ R.pos++; return pgRevisar(); }
+  const frente = S==='es-pt' ? i.es : i.pt;
+  const verso  = S==='es-pt' ? i.pt : i.es;
+  const feitas=Object.keys(R.vistos).length;
+  return `<div class="prog"><div style="width:${Math.round(feitas/R.total*100)}%"></div></div>
+  <div class="muted" style="margin-bottom:8px">${feitas} de ${R.total}${R.treino?' · treino livre':''}</div>
+  <div class="flash">
+    <div class="lado">${S==='es-pt'?'español':'português'}${i.cat?' · '+esc(i.cat):''}</div>
+    <div class="frente">${esc(frente)}</div>
+    ${S==='es-pt'?`<div><button class="ico" onclick="falarItem('${i.id}')">🔊</button></div>`:''}
+    ${R.aberto?`<div class="verso">
+      <div class="resp">${esc(verso)}</div>
+      ${S==='pt-es'?`<div style="margin-top:8px"><button class="ico" onclick="falarItem('${i.id}')">🔊</button></div>`:''}
+      ${R.ouvido!=null?`<div class="ouvido ${confere(R.ouvido,verso)?'ok':'no'}">${confere(R.ouvido,verso)?'✓':'🎤'} Você disse: “${esc(R.ouvido)}”</div>`:''}
+      ${i.ex?`<div class="ex">“${esc(i.ex)}”</div>`:''}
+      ${i.nota?`<div class="nota">${esc(i.nota)}</div>`:''}
+    </div>`:''}
+  </div>
+  ${R.aberto
+    ? `<div class="row"><button class="btn danger big" onclick="responder(false)">Ainda não 😅</button><button class="btn big" onclick="responder(true)">Sabia ✓</button></div>`
+    : `<div class="row">${SR?`<button class="btn sec big mic" onclick="responderFalando(this,'${S==='es-pt'?'pt-BR':'es-ES'}')">🎤 Falar a resposta</button>`:''}<button class="btn big" onclick="R.aberto=true;render()">Mostrar resposta</button></div>`}
+  <div style="text-align:center;margin-top:14px"><button class="btn sec sm" onclick="R=null;render()">Parar revisão</button></div>`;
+}
+function responder(sabia){
+  const id=R.fila[R.pos], i=item(id);
+  // só a primeira resposta da sessão conta para o agendamento
+  if(!R.vistos[id]){
+    R.vistos[id]=true;
+    if(sabia) R.certas++; else R.erros++;
+    if(!R.treino){
+      i.nivel = sabia ? Math.min(i.nivel+1,NIVEL_MAX) : 0;
+      i.prox = somaDias(hoje(), INTERVALOS[i.nivel]);
+      save();
+    }
+  }
+  if(!sabia) R.fila.push(id);  // volta no fim da fila até acertar
+  R.pos++; R.aberto=false; R.ouvido=null; render();
+}
+function responderFalando(btn, lang){
+  ouvir(lang, btn, (t,final)=>{ btn.textContent='🎤 '+t; if(final){ R.ouvido=t; R.aberto=true; render(); } });
+}
+// compara a fala com a resposta, ignorando acentos, pontuação e maiúsculas; aceita qualquer opção separada por / , ;
+function confere(fala, resp){
+  const f=limpa(fala);
+  return resp.split(/[\/,;]/).map(limpa).filter(Boolean).some(o=>o===f);
+}
+function setSentido(s){ D.config.sentido=s; save(); if(R){ R.aberto=false; R.ouvido=null; } render(); }
+
+/* ============================================================
+   PÁGINA: ANOTAR / EDITAR
+   ============================================================ */
+function pgAdicionar(){
+  const i = ED ? item(ED) : {es:'',pt:'',ex:'',nota:'',cat:''};
+  return `<div class="sec-t">${ED?'Editar anotação':'Nova anotação'}</div>
+  ${SR&&!ED?'<div class="sec-s">Toque em 🎤 para falar em vez de digitar: o campo de espanhol entende espanhol e o de português entende português.</div>':''}
+  <div class="card white">
+    <label class="lbl">Em espanhol</label>
+    <div class="campo"><input class="inp" id="f_es" value="${esc(i.es)}" placeholder="ex.: tener ganas de" onfocus="ultimo=this" autocapitalize="off">${micBtn('es','es-ES')}</div>
+    <label class="lbl">Em português</label>
+    <div class="campo"><input class="inp" id="f_pt" value="${esc(i.pt)}" placeholder="ex.: estar com vontade de" onfocus="ultimo=this">${micBtn('pt','pt-BR')}</div>
+    <label class="lbl">Frase de exemplo (opcional)</label>
+    <div class="campo"><input class="inp" id="f_ex" value="${esc(i.ex)}" placeholder="ex.: Tengo ganas de viajar." onfocus="ultimo=this">${micBtn('ex','es-ES')}</div>
+    <label class="lbl">Observação (opcional)</label>
+    <div class="campo"><textarea class="inp" id="f_nota" placeholder="Dica, regra, onde aprendi…" onfocus="ultimo=this">${esc(i.nota)}</textarea>${micBtn('nota','pt-BR')}</div>
+    <div class="acentos">${['á','é','í','ó','ú','ñ','ü','¿','¡'].map(c=>`<button type="button" onmousedown="event.preventDefault()" onclick="inserir('${c}')">${c}</button>`).join('')}</div>
+    <label class="lbl">Tipo</label>
+    <div class="filters" style="margin:0" id="f_cat">${CATS.map(c=>`<button type="button" class="fchip ${i.cat===c?'active':''}" onclick="escolherCat(this)">${c}</button>`).join('')}</div>
+    <div class="row wrap" style="margin-top:16px">
+      ${ED
+        ? `<button class="btn" onclick="salvar(false)">Salvar</button><button class="btn sec" onclick="go('caderno')">Cancelar</button><button class="btn danger" style="margin-left:auto" onclick="excluir('${ED}')">Excluir</button>`
+        : `<button class="btn" onclick="salvar(true)">Salvar e anotar outra</button><button class="btn sec" onclick="salvar(false)">Salvar</button>`}
+    </div>
+  </div>
+  ${ED?'':`<div class="sec-t" style="margin-top:22px">Várias de uma vez</div>
+  <div class="sec-s">Cole uma por linha no formato <b>espanhol = português</b>. Se quiser, acrescente um exemplo depois de <b>|</b>.<br>
+  ex.: <i>la cuenta = a conta | ¿Me trae la cuenta, por favor?</i></div>
+  <div class="card white"><textarea class="inp" id="f_lote" style="min-height:110px" placeholder="el desayuno = o café da manhã&#10;ahorita = agorinha"></textarea>
+  <div class="row" style="margin-top:10px"><button class="btn" onclick="adicionarLote()">Adicionar ao caderno</button></div></div>`}`;
+}
+let ultimo=null;
+function inserir(c){
+  const el=ultimo||document.getElementById('f_es'); if(!el) return;
+  const a=el.selectionStart??el.value.length, b=el.selectionEnd??el.value.length;
+  el.value=el.value.slice(0,a)+c+el.value.slice(b); el.focus(); el.setSelectionRange(a+c.length,a+c.length);
+}
+function escolherCat(btn){
+  const on=btn.classList.contains('active');
+  document.querySelectorAll('#f_cat .fchip').forEach(b=>b.classList.remove('active'));
+  if(!on) btn.classList.add('active');
+}
+function novoItem(es,pt,ex,nota,cat){ return {id:uid(),es,pt,ex,nota,cat,nivel:0,prox:hoje(),criado:new Date().toISOString()}; }
+function salvar(outra){
+  const v=k=>document.getElementById('f_'+k).value.trim();
+  const es=v('es'), pt=v('pt'), ex=v('ex'), nota=v('nota');
+  const sel=document.querySelector('#f_cat .fchip.active'), cat=sel?sel.textContent:'';
+  if(!es||!pt){ toast('Preencha o espanhol e o português'); return; }
+  if(ED){
+    Object.assign(item(ED),{es,pt,ex,nota,cat}); ED=null; save(); toast('Anotação atualizada ✓'); go('caderno');
+    return;
+  }
+  const dup=D.itens.find(i=>sem(i.es)===sem(es));
+  D.itens.push(novoItem(es,pt,ex,nota,cat)); save();
+  toast(dup?'Salvo (já havia uma parecida)':'Anotado ✓');
+  if(outra){ render(); const e=document.getElementById('f_es'); if(e) e.focus(); }
+  else go('caderno');
+}
+function adicionarLote(){
+  const linhas=document.getElementById('f_lote').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  let n=0; const ruins=[];
+  linhas.forEach(l=>{
+    const [par,ex]=l.split('|').map(s=>s.trim());
+    const m=par.match(/^(.+?)\s*(?:=|\t|\s[-–—]\s)\s*(.+)$/);
+    if(!m){ ruins.push(l); return; }
+    D.itens.push(novoItem(m[1].trim(),m[2].trim(),ex||'','','')); n++;
+  });
+  if(n) save();
+  if(ruins.length){ render(); document.getElementById('f_lote').value=ruins.join('\n'); toast(`${n} adicionada${n===1?'':'s'} · ${ruins.length} sem “=”`); }
+  else if(n){ toast(`${n} adicionada${n>1?'s':''} ✓`); go('caderno'); }
+}
+function editar(id){ ED=id; go('adicionar'); }
+function excluir(id){
+  const i=item(id);
+  pedir(`Excluir “${i.es}” do caderno?`,()=>{ D.itens=D.itens.filter(x=>x.id!==id); ED=null; save(); toast('Excluída'); go('caderno'); },'Excluir');
+}
+
+/* ============================================================
+   PÁGINA: AJUSTES
+   ============================================================ */
+function pgAjustes(){
+  return `<div class="sec-t">Backup</div>
+  <div class="card">
+    <div class="muted" style="margin-bottom:10px">As anotações ficam salvas neste navegador. Copie o backup para guardar ou levar para outro aparelho.</div>
+    <div class="row wrap"><button class="btn" onclick="copiar(JSON.stringify(D),'Backup copiado 📋')">Copiar backup</button>
+    <button class="btn sec" onclick="importar()">Restaurar backup</button>
+    <button class="btn sec" onclick="copiarTexto()">Copiar como lista</button></div>
+  </div>
+  <div class="sec-t" style="margin-top:22px">Como funciona a revisão</div>
+  <div class="card"><div class="muted" style="line-height:1.6">Cada anotação nova entra na revisão do mesmo dia. Quando você acerta, ela sobe de nível e volta cada vez mais espaçada: <b>1, 3, 7, 14, 30 e 60 dias</b>. Se errar, ela volta para o começo e reaparece amanhã. Assim você revisa mais o que ainda não fixou.</div></div>`;
+}
+function copiarTexto(){
+  if(!D.itens.length){ toast('O caderno está vazio'); return; }
+  const t=D.itens.slice().sort((a,b)=>a.es.localeCompare(b.es,'es')).map(i=>`${i.es} = ${i.pt}${i.ex?' | '+i.ex:''}`).join('\n');
+  copiar(t,'Lista copiada 📋');
+}
+function importar(){
+  caixaTexto('Cole aqui o backup copiado antes:','',t=>{
+    try{ const d=JSON.parse(t); if(!Array.isArray(d.itens)) throw 0; D=d; save(); load(); R=null; render(); toast('Backup restaurado ✓'); }
+    catch(e){ toast('Backup inválido: cole o texto completo'); }
+  },'Restaurar');
+}
+
+if('speechSynthesis' in window){
+  speechSynthesis.getVoices();
+  // as vozes carregam depois da página; atualiza o aviso de voz da aba Frases
+  speechSynthesis.onvoiceschanged=()=>{ const a=document.getElementById('avisoVoz'); if(a) a.innerHTML=avisoVoz(); };
+}
+load(); render();
+
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
