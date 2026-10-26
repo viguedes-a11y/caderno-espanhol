@@ -480,30 +480,41 @@ function listaHtml(){
 /* ============================================================
    PÁGINA: FRASES PARA TREINAR
    ============================================================ */
+function acentosHtml(){ return `<div class="acentos">${['á','é','í','ó','ú','ñ','ü','¿','¡'].map(c=>`<button type="button" onmousedown="event.preventDefault()" onclick="inserir('${c}')">${c}</button>`).join('')}</div>`; }
 function pgFrases(){
-  const f = EDF ? D.frases.find(x=>x.id===EDF) : {es:'',pt:''};
   let h=`<div class="sec-t">Frases para treinar</div>
   <div class="sec-s">Escreva ou dite as frases que quer treinar. Toque em <b>▶ Ouvir</b> para escutar com o sotaque da Espanha, <b>🐢</b> para ouvir devagar e <b>🎤 Falar</b> para repetir e ver se entendi tudo.</div>
   <div class="card white">
     <label class="lbl">Frase em espanhol</label>
-    <div class="campo"><textarea class="inp" id="f_fes" placeholder="ex.: ¿Me puedes ayudar, por favor?" onfocus="ultimo=this" autocapitalize="sentences">${esc(f.es)}</textarea>${micBtn('fes','es-ES')}</div>
+    <div class="campo"><textarea class="inp" id="f_fes" placeholder="ex.: ¿Me puedes ayudar, por favor?" onfocus="ultimo=this" autocapitalize="sentences"></textarea>${micBtn('fes','es-ES')}</div>
     <label class="lbl">Tradução (opcional)</label>
-    <div class="campo"><input class="inp" id="f_fpt" value="${esc(f.pt)}" placeholder="ex.: Você pode me ajudar, por favor?" onfocus="ultimo=this">${micBtn('fpt','pt-BR')}</div>
-    <div class="acentos">${['á','é','í','ó','ú','ñ','ü','¿','¡'].map(c=>`<button type="button" onmousedown="event.preventDefault()" onclick="inserir('${c}')">${c}</button>`).join('')}</div>
+    <div class="campo"><input class="inp" id="f_fpt" placeholder="ex.: Você pode me ajudar, por favor?" onfocus="ultimo=this">${micBtn('fpt','pt-BR')}</div>
+    ${acentosHtml()}
     <div class="row wrap" style="margin-top:14px">
-      <button class="btn" onclick="salvarFrase()">${EDF?'Salvar':'Adicionar frase'}</button>
+      <button class="btn" onclick="adicionarFrase()">Adicionar frase</button>
       <button class="btn sec play" onclick="const t=document.getElementById('f_fes').value.trim(); if(t) falar(t,false,this); else toast('Escreva a frase primeiro')">▶ Ouvir</button>
-      ${EDF?`<button class="btn sec" onclick="EDF=null;render()">Cancelar</button><button class="btn danger" style="margin-left:auto" onclick="excluirFrase('${EDF}')">Excluir</button>`:''}
     </div>
   </div>`;
   h+=`<div class="sec-s" id="avisoVoz">${avisoVoz()}</div>`;
   if(!D.frases.length) return h+`<div class="empty">Nenhuma frase ainda.</div>`;
   h+=`<div class="row" style="margin:18px 2px 10px"><div class="muted">${D.frases.length} frase${D.frases.length>1?'s':''}</div>
     <button class="btn sec sm play" style="margin-left:auto" onclick="ouvirTodas(this)">▶ Ouvir todas</button></div>`;
-  h+=D.frases.slice().sort((a,b)=>b.criado.localeCompare(a.criado)).map(f=>`<div class="item">
+  h+=D.frases.slice().sort((a,b)=>b.criado.localeCompare(a.criado)).map(f=> f.id===EDF ? `<div class="item" id="ed_${f.id}">
+    <label class="lbl">Frase em espanhol</label>
+    <div class="campo"><textarea class="inp" id="f_efes" onfocus="ultimo=this" autocapitalize="sentences">${esc(f.es)}</textarea>${micBtn('efes','es-ES')}</div>
+    <label class="lbl">Tradução (opcional)</label>
+    <div class="campo"><input class="inp" id="f_efpt" value="${esc(f.pt)}" onfocus="ultimo=this">${micBtn('efpt','pt-BR')}</div>
+    ${acentosHtml()}
+    <div class="row wrap" style="margin-top:12px">
+      <button class="btn" onclick="salvarEdicaoFrase()">Salvar</button>
+      <button class="btn sec" onclick="EDF=null;render()">Cancelar</button>
+      <button class="btn danger" style="margin-left:auto" onclick="excluirFrase('${f.id}')">🗑 Excluir</button>
+    </div>
+  </div>` : `<div class="item">
     <div class="item-top">
       <div style="flex:1;min-width:0"><div class="es">${esc(f.es)}</div>${f.pt?`<div class="pt">${esc(f.pt)}</div>`:''}</div>
       <button class="ico" onclick="editarFrase('${f.id}')" title="Editar">✎</button>
+      <button class="ico" onclick="excluirFrase('${f.id}')" title="Excluir">🗑</button>
     </div>
     <div class="frase-acoes">
       <button class="btn sm play" onclick="falarFrase('${f.id}',false,this)">▶ Ouvir</button>
@@ -526,16 +537,26 @@ function ouvirTodas(btn){
   lista.forEach((f,k)=>falar(f.es,false,k===lista.length-1?btn:null,true));
   btn.classList.add('on');
 }
-function salvarFrase(){
+function adicionarFrase(){
   const es=document.getElementById('f_fes').value.trim(), pt=document.getElementById('f_fpt').value.trim();
   if(!es){ toast('Escreva ou dite a frase em espanhol'); return; }
-  if(EDF){ Object.assign(frase(EDF),{es,pt,atualizado:agora()}); EDF=null; toast('Frase atualizada ✓'); }
-  else{ D.frases.push({id:uid(),es,pt,criado:agora(),atualizado:agora()}); toast('Frase adicionada ✓'); }
+  D.frases.push({id:uid(),es,pt,criado:agora(),atualizado:agora()}); toast('Frase adicionada ✓');
   save(); render();
 }
-function editarFrase(id){ EDF=id; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function salvarEdicaoFrase(){
+  const es=document.getElementById('f_efes').value.trim(), pt=document.getElementById('f_efpt').value.trim();
+  if(!es){ toast('A frase em espanhol não pode ficar vazia'); return; }
+  Object.assign(frase(EDF),{es,pt,atualizado:agora()}); EDF=null; toast('Frase atualizada ✓');
+  save(); render();
+}
+// a edição abre no próprio cartão da frase
+function editarFrase(id){
+  EDF=id; render();
+  const c=document.getElementById('ed_'+id); if(c) c.scrollIntoView({block:'center'});
+  const t=document.getElementById('f_efes'); if(t && matchMedia('(hover:hover)').matches) t.focus();
+}
 function excluirFrase(id){
-  pedir('Excluir esta frase?',()=>{ D.frases=D.frases.filter(f=>f.id!==id); apagar(id); EDF=null; save(); render(); toast('Excluída'); },'Excluir');
+  pedir(`Excluir “${frase(id).es}”?`,()=>{ D.frases=D.frases.filter(f=>f.id!==id); apagar(id); EDF=null; save(); render(); toast('Excluída'); },'Excluir');
 }
 // ouve a pessoa repetindo a frase e marca as palavras que reconheceu (verde) ou não (vermelho)
 function treinarFrase(id,btn){
@@ -695,7 +716,7 @@ function pgAdicionar(){
     <div class="campo"><input class="inp" id="f_ex" value="${esc(i.ex)}" placeholder="ex.: Tengo ganas de viajar." onfocus="ultimo=this">${micBtn('ex','es-ES')}</div>
     <label class="lbl">Observação (opcional)</label>
     <div class="campo"><textarea class="inp" id="f_nota" placeholder="Dica, regra, onde aprendi…" onfocus="ultimo=this">${esc(i.nota)}</textarea>${micBtn('nota','pt-BR')}</div>
-    <div class="acentos">${['á','é','í','ó','ú','ñ','ü','¿','¡'].map(c=>`<button type="button" onmousedown="event.preventDefault()" onclick="inserir('${c}')">${c}</button>`).join('')}</div>
+    ${acentosHtml()}
     <label class="lbl">Tipo</label>
     <div class="filters" style="margin:0" id="f_cat">${CATS.map(c=>`<button type="button" class="fchip ${i.cat===c?'active':''}" onclick="escolherCat(this)">${c}</button>`).join('')}</div>
     <div class="row wrap" style="margin-top:16px">
