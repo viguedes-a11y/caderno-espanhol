@@ -85,6 +85,9 @@ textarea.inp{min-height:70px;resize:vertical;line-height:1.5;}
 .ico{width:32px;height:32px;border-radius:50%;border:1px solid var(--creme-e);background:white;cursor:pointer;flex-shrink:0;font-size:14px;line-height:1;color:var(--texto-s);}
 .ico.mic{width:38px;height:38px;font-size:16px;}
 .btn.play.on{background:var(--verde-c);border-color:var(--verde-c);color:white;}
+.fa-trap{font-size:12px;margin-top:8px;background:rgba(212,117,106,.1);border:1px solid rgba(212,117,106,.25);color:#9a4a40;border-radius:8px;padding:6px 9px;line-height:1.45;}
+.fa-trap b{color:#7d3a32;}
+.card a{color:var(--verde-c);font-weight:600;}
 .frase-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 .res{font-size:14px;margin-top:10px;line-height:1.6;}
 .res .w{padding:1px 3px;border-radius:5px;}
@@ -150,9 +153,9 @@ const CATS = ['Vocabulário','Expressão','Verbo','Gramática','Frase'];
 // dias até a próxima revisão para cada nível (0 = nova ou errada)
 const INTERVALOS = [1,1,3,7,14,30,60];
 const NIVEL_MAX = INTERVALOS.length-1;
-const PAGES = [['caderno','Caderno'],['frases','Frases'],['revisar','Revisar'],['adicionar','+ Anotar'],['ajustes','Ajustes']];
+const PAGES = [['caderno','Caderno'],['frases','Frases'],['falsos','Falsos amigos'],['revisar','Revisar'],['adicionar','+ Anotar'],['ajustes','Ajustes']];
 
-function dadosPadrao(){ return {versao:1, itens:[], frases:[], importadas:[], config:{sentido:'es-pt'}}; }
+function dadosPadrao(){ return {versao:1, itens:[], frases:[], importadas:[], apagados:{}, config:{sentido:'es-pt'}}; }
 
 /* ============================================================
    ANOTAÇÕES DITADAS NO CHAT
@@ -168,11 +171,149 @@ const DO_CHAT = [
   {id:'chat_tan_pronto_como', cat:'Expressão', es:'tan pronto como', pt:'assim que',
    ex:'Te llamo tan pronto como llegue.', nota:'Falando do futuro, o verbo depois vai no subjuntivo: tan pronto como llegue = assim que eu chegar.'},
 ];
+const FRASES_DO_CHAT = [
+  {id:'fr_que_tal', es:'¿Qué tal?', pt:'Tudo bem? / Como vai?'},
+  {id:'fr_vale', es:'Vale.', pt:'Ok / Combinado / Beleza.'},
+  {id:'fr_no_pasa_nada', es:'No pasa nada.', pt:'Não tem problema / Tudo bem.'},
+  {id:'fr_cuanto_es', es:'¿Cuánto es?', pt:'Quanto é?'},
+  {id:'fr_me_pones', es:'¿Me pones un café con leche, por favor?', pt:'Me vê um café com leite, por favor?'},
+  {id:'fr_bano', es:'¿Dónde está el baño?', pt:'Onde fica o banheiro?'},
+  {id:'fr_ayudar', es:'Perdona, ¿me puedes ayudar?', pt:'Desculpa, você pode me ajudar?'},
+  {id:'fr_despacio', es:'No entiendo, ¿puedes hablar más despacio?', pt:'Não entendo, pode falar mais devagar?'},
+  {id:'fr_guay', es:'¡Qué guay!', pt:'Que legal!'},
+  {id:'fr_hasta_luego', es:'Hasta luego.', pt:'Até logo / Tchau.'},
+];
+
+/* ============================================================
+   FALSOS AMIGOS (consulta)
+   [espanhol, o que significa, palavra em português que confunde, como se diz essa palavra em espanhol, exemplo]
+   ============================================================ */
+const FALSOS = [
+  ['pronto','logo, em breve, cedo','pronto','listo','Nos vemos pronto.'],
+  ['luego','depois, mais tarde','logo (imediatamente)','enseguida','Hasta luego.'],
+  ['exquisito','delicioso, requintado','esquisito','raro, extraño','La paella está exquisita.'],
+  ['embarazada','grávida','embaraçada','avergonzada','Mi hermana está embarazada de tres meses.'],
+  ['borracho / borracha','bêbado / bêbada','borracha','goma (de borrar)','Anoche volvió a casa borracho.'],
+  ['polvo','pó, poeira','polvo','pulpo','Los muebles están llenos de polvo.'],
+  ['oficina','escritório','oficina (mecânica)','taller','Trabajo en una oficina en el centro.'],
+  ['rato','um momento, um tempinho','rato','ratón','Espérame un rato.'],
+  ['cena','jantar','cena (de filme)','escena','La cena está lista.'],
+  ['aceite','óleo, azeite','aceite (de aceitar)','acepto / aceptado','Échale un poco de aceite.'],
+  ['apellido','sobrenome','apelido','apodo','¿Cuál es tu apellido?'],
+  ['salsa','molho','salsa (erva)','perejil','Pasta con salsa de tomate.'],
+  ['taza','xícara','taça','copa','Una taza de café, por favor.'],
+  ['vaso','copo','vaso (de planta)','maceta / florero','¿Me das un vaso de agua?'],
+  ['presunto','suposto, presumido','presunto','jamón','El presunto ladrón fue detenido.'],
+  ['latido','batimento do coração','latido (de cachorro)','ladrido','Escucho los latidos de tu corazón.'],
+  ['largo','comprido, longo','largo','ancho','Tiene el pelo muy largo.'],
+  ['tirar','jogar (fora), atirar','tirar (foto, roupa)','sacar una foto / quitarse la ropa','Tira la basura, por favor.'],
+  ['contestar','responder, atender (o telefone)','contestar (discordar)','cuestionar / rebatir','No contesta el teléfono.'],
+  ['acordarse (de)','lembrar-se','acordar (despertar)','despertarse','No me acuerdo de su nombre.'],
+  ['propina','gorjeta','propina (suborno)','soborno','Dejamos propina al camarero.'],
+  ['brincar','pular, saltar','brincar','jugar','Los niños brincan en la cama.'],
+  ['escoba','vassoura','escova','cepillo','Barre la cocina con la escoba.'],
+  ['cachorro','filhote (de qualquer animal)','cachorro','perro','La gata tuvo cuatro cachorros.'],
+  ['zurdo','canhoto','surdo','sordo','Mi hijo es zurdo.'],
+  ['aula','sala de aula','aula (lição)','clase','Los alumnos están en el aula.'],
+  ['todavía','ainda','todavia','sin embargo','Todavía no he comido.'],
+  ['exprimir','espremer','exprimir (expressar)','expresar','Exprime dos naranjas.'],
+  ['firma','assinatura','firma (empresa)','empresa','Necesito tu firma aquí.'],
+  ['rojo','vermelho','roxo','morado','Un vestido rojo.'],
+  ['rubio','loiro','ruivo','pelirrojo','Tiene el pelo rubio.'],
+  ['sitio','lugar','sítio (chácara)','finca / casa de campo','No hay sitio para aparcar.'],
+  ['tapa','petisco (e também tampa)','tapa (na cara)','bofetada','Vamos de tapas esta noche.'],
+  ['pastel','bolo, torta','pastel (frito)','empanadilla','Un pastel de cumpleaños.'],
+  ['balcón','sacada, varanda','balcão','mostrador / barra','Desayuno en el balcón.'],
+  ['mala','má (feminino de malo)','mala (de viagem)','maleta','No es mala idea.'],
+  ['ola','onda (do mar)','olá','hola','Hoy las olas son muy grandes.'],
+  ['bolso','bolsa (de mão)','bolso (da roupa)','bolsillo','Las llaves están en mi bolso.'],
+  ['vago','preguiçoso','vaga (de emprego, de carro)','vacante / plaza','No seas vago y ayúdame.'],
+  ['gracioso','engraçado','gracioso (fofo)','mono / bonito','Es un chico muy gracioso.'],
+  ['espantoso','horrível, assustador','espantoso (impressionante)','asombroso','Hace un calor espantoso.'],
+  ['pegar','bater; também colar, grudar','pegar (segurar, apanhar)','coger','No le pegues a tu hermano.'],
+  ['doce','doze (12)','doce','dulce','Son las doce.'],
+  ['cola','fila; também rabo','cola (adesivo)','pegamento','Hay mucha cola en el supermercado.'],
+  ['crianza','criação (de filhos, de vinho)','criança','niño / niña','Un vino de crianza.'],
+  ['berro','agrião','berro','grito','Una ensalada de berros.'],
+  ['abonar','pagar; também adubar (a terra)','abonar (falta)','justificar','Puede abonar en efectivo o con tarjeta.'],
+  ['acordar','combinar, chegar a um acordo','acordar (despertar)','despertar(se)','Acordamos vernos el lunes.'],
+  ['acreditar','comprovar, credenciar','acreditar (crer)','creer','Tiene que acreditar su identidad.'],
+  ['almohada','travesseiro','almofada','cojín','Esta almohada es muy dura.'],
+  ['apagar','desligar; apagar (luz, fogo)','apagar (com borracha)','borrar','Apaga la luz, por favor.'],
+  ['apurar','terminar até o fim; (América Latina) apressar','apurar (investigar)','averiguar','Apura el café, que nos vamos.'],
+  ['arena','areia','arena (estádio)','estadio / plaza de toros','Tengo arena en los zapatos.'],
+  ['asignatura','matéria (escolar)','assinatura','firma / suscripción','Mi asignatura favorita es historia.'],
+  ['asistir','comparecer, frequentar','assistir (TV, filme)','ver','Asistí a la reunión de padres.'],
+  ['atestado','lotado, abarrotado','atestado (médico)','certificado / justificante médico','El metro iba atestado.'],
+  ['azar','acaso, sorte (chance)','azar (má sorte)','mala suerte','Nos encontramos por azar.'],
+  ['bala','bala (de arma)','bala (doce)','caramelo','La bala no le dio.'],
+  ['barata','barata (de preço baixo)','barata (inseto)','cucaracha','Esta camiseta es muy barata.'],
+  ['batata','batata-doce','batata (inglesa)','patata','Me encanta la batata asada.'],
+  ['beca','bolsa de estudos','beca (toga)','toga','Consiguió una beca para estudiar en Madrid.'],
+  ['billete','nota (de dinheiro); passagem','bilhete (recado)','nota','¿Tienes un billete de diez?'],
+  ['bizarro','valente, corajoso (hoje também usado como esquisito)','bizarro (estranho)','raro / extravagante','Un soldado bizarro.'],
+  ['bocadillo','sanduíche (de pão francês)','bocadinho','un poquito','Un bocadillo de jamón, por favor.'],
+  ['bolsa','sacola, saco; bolsa de valores','bolsa (de mão)','bolso','¿Quiere bolsa?'],
+  ['borrar','apagar (texto, arquivo)','borrar (manchar)','manchar / emborronar','Borra ese mensaje.'],
+  ['botar','quicar (bola); (América Latina) jogar fora','botar (colocar)','poner','La pelota bota mucho.'],
+  ['brinco','pulo, salto','brinco (joia)','pendiente','Dio un brinco de alegría.'],
+  ['cacho','pedaço','cacho (de banana)','racimo','Dame un cacho de pan.'],
+  ['cadera','quadril','cadeira','silla','Me duele la cadera.'],
+  ['carpeta','pasta (de papéis)','carpete','moqueta / alfombra','Guarda los papeles en la carpeta.'],
+  ['carro','carrinho (de compras), carroça; (América Latina) carro','carro (automóvel, na Espanha)','coche','Coge un carro para la compra.'],
+  ['chato','achatado (nariz chato)','chato (aborrecido)','pesado / aburrido','Tiene la nariz chata.'],
+  ['colar','coar (líquido)','colar (grudar)','pegar','Cuela el café antes de servirlo.'],
+  ['concurso','concurso, competição (de TV, de beleza)','concurso público','oposiciones','Ganó un concurso de cocina.'],
+  ['criado / criada','empregado(a) doméstico(a)','criado (inventado)','creado','La criada abrió la puerta.'],
+  ['desenvolver','desembrulhar','desenvolver','desarrollar','Desenvuelve el regalo.'],
+  ['distinto','diferente','distinto (elegante)','distinguido','Somos muy distintos.'],
+  ['escritorio','escrivaninha','escritório','oficina','El ordenador está en el escritorio.'],
+  ['estafa','golpe, fraude','estafa (cansaço)','agotamiento','Esa oferta es una estafa.'],
+  ['estofado','ensopado (comida)','estofado (sofá)','tapizado','Un estofado de ternera.'],
+  ['fecha','data','fecha (de fechar)','cierra','¿Cuál es la fecha de hoy?'],
+  ['flaco','magro','fraco','débil','Estás muy flaco.'],
+  ['fofo','fofo, macio (textura)','fofo (bonitinho)','mono / tierno','Un colchón muy fofo.'],
+  ['ganancia','lucro, ganho','ganância','codicia','Las ganancias subieron este año.'],
+  ['garrafa','garrafão, botijão (de gás)','garrafa','botella','Compramos una garrafa de agua de cinco litros.'],
+  ['gozar','desfrutar, curtir','gozar (zombar)','burlarse','Goza de tus vacaciones.'],
+  ['grifo','torneira','grifo (destaque no texto)','subrayado','Cierra el grifo.'],
+  ['jornal','diária (pagamento por dia)','jornal','periódico','Cobra un jornal de sesenta euros.'],
+  ['ligar','paquerar, flertar','ligar (telefonar / aparelho)','llamar / encender','Intentó ligar con ella en la fiesta.'],
+  ['logro','conquista, êxito','logro (engano)','engaño / timo','Terminar la carrera fue un gran logro.'],
+  ['manteca','banha (na Argentina, manteiga)','manteiga','mantequilla','Manteca de cerdo.'],
+  ['mirar','olhar','mirar (apontar)','apuntar','Mira por la ventana.'],
+  ['novela','romance (livro)','novela (de TV)','telenovela','Estoy leyendo una novela de misterio.'],
+  ['oso','urso','osso','hueso','Vimos un oso en el bosque.'],
+  ['padres','pais (pai e mãe)','padres (sacerdotes)','curas / sacerdotes','Mis padres viven en Sevilla.'],
+  ['palco','camarote (de teatro, estádio)','palco','escenario','Vimos la ópera desde un palco.'],
+  ['pasta','massa (macarrão); na Espanha, também dinheiro','pasta (de papéis)','carpeta','Cuesta mucha pasta.'],
+  ['pelado','careca, raspado; sem dinheiro','pelado (nu)','desnudo','Estoy pelado hasta fin de mes.'],
+  ['pelo','cabelo','pelo (do corpo)','vello','Tienes el pelo precioso.'],
+  ['pipa','semente de girassol (pipas); cachimbo','pipa (papagaio)','cometa','Comimos pipas en el parque.'],
+  ['prejuicio','preconceito','prejuízo','pérdida / perjuicio','Hay que luchar contra los prejuicios.'],
+  ['prender','acender (fogo); (América Latina) ligar aparelhos','prender (deter alguém)','detener / arrestar','Prende la chimenea.'],
+  ['presa','represa; presa (de caça)','pressa','prisa','La presa está llena después de las lluvias.'],
+  ['quitar','tirar, remover','quitar (pagar dívida)','saldar / liquidar','Quítate los zapatos.'],
+  ['rasgo','traço, característica','rasgo (rasgão)','rasgón / desgarro','Tiene rasgos de su madre.'],
+  ['regalo','presente','regalo (prazer)','placer / lujo','Te he comprado un regalo.'],
+  ['risco','penhasco, rochedo','risco (perigo)','riesgo','La casa está sobre un risco.'],
+  ['salada','salgada','salada','ensalada','La sopa está muy salada.'],
+  ['seta','cogumelo','seta (flecha)','flecha','Un risotto de setas.'],
+  ['sobremesa','conversa à mesa depois da refeição','sobremesa','postre','Nos quedamos de sobremesa hasta las cinco.'],
+  ['sobrenombre','apelido','sobrenome','apellido','Su sobrenombre era «el Rubio».'],
+  ['sótano','porão','sótão','desván','Guardamos las cajas en el sótano.'],
+  ['suceso','acontecimento (muitas vezes trágico)','sucesso','éxito','Un suceso terrible en las noticias.'],
+  ['tela','tecido','tela (de TV, celular)','pantalla','Esta tela es de algodón.'],
+  ['topo','toupeira','topo','cima / cumbre','Un topo en el jardín.'],
+  ['venda','atadura, faixa','venda (de vender)','venta','Le pusieron una venda en el brazo.'],
+  ['abrigo','casaco','abrigo (refúgio)','refugio','Ponte el abrigo, que hace frío.'],
+  ['esposas','esposas e também algemas!','','','La policía le puso las esposas.'],
+].map(([es,sig,parece,certo,ex])=>({es,sig,parece,certo,ex}));
 
 /* ============================================================
    ESTADO
    ============================================================ */
-let D, page='caderno', ED=null, EDF=null, busca='', filtroCat='todas', R=null;
+let D, page='caderno', ED=null, EDF=null, busca='', buscaFA='', filtroCat='todas', R=null;
 
 function uid(){ return Math.random().toString(36).slice(2,9); }
 function load(){
@@ -183,14 +324,21 @@ function load(){
   D.config = Object.assign(dadosPadrao().config, D.config||{});
   D.frases = D.frases||[];
   D.importadas = D.importadas||[];
+  D.apagados = D.apagados||{};
+  // as que vêm prontas ficam com carimbo '0': qualquer edição ou exclusão feita em outro aparelho vence
   const novas = DO_CHAT.filter(c=>!D.importadas.includes(c.id));
-  novas.forEach(c=>{ D.itens.push(Object.assign(novoItem(c.es,c.pt,c.ex,c.nota,c.cat),{id:c.id})); D.importadas.push(c.id); });
-  if(novas.length) save();
+  novas.forEach(c=>{ D.itens.push(Object.assign(novoItem(c.es,c.pt,c.ex,c.nota,c.cat),{id:c.id,atualizado:'0'})); D.importadas.push(c.id); });
+  const novasFr = FRASES_DO_CHAT.filter(c=>!D.importadas.includes(c.id));
+  novasFr.forEach(c=>{ D.frases.push({id:c.id, es:c.es, pt:c.pt, criado:agora(), atualizado:'0'}); D.importadas.push(c.id); });
+  if(novas.length || novasFr.length) save();
   try{ const pg = localStorage.getItem(KEY+'_page'); if(pg && PAGES.some(x=>x[0]===pg)) page = pg; }catch(e){}
 }
 function save(){
   try{ localStorage.setItem(KEY, JSON.stringify(D)); }catch(e){ toast('Não consegui salvar no navegador'); }
+  agendarSync();
 }
+function agora(){ return new Date().toISOString(); }
+function apagar(id){ D.apagados[id]=agora(); }
 function item(id){ return D.itens.find(i=>i.id===id); }
 
 /* ============================================================
@@ -289,9 +437,8 @@ function go(p){ if(_rec) _rec.abort(); if('speechSynthesis' in window) speechSyn
 function render(){
   const due=paraHoje().length;
   document.getElementById('tabs').innerHTML = PAGES.map(([id,nm])=>`<button class="tab ${page===id?'active':''}" onclick="go('${id}')">${id==='adicionar'&&ED?'Editar':nm}${id==='revisar'&&due?`<span class="n">${due}</span>`:''}</button>`).join('');
-  const n=D.itens.length;
-  document.getElementById('hdrSum').textContent = n ? `${n} anotaç${n>1?'ões':'ão'} · ${due?due+' para revisar hoje':'revisão em dia ✓'}` : 'comece anotando o que aprendeu';
-  const fn={caderno:pgCaderno,frases:pgFrases,revisar:pgRevisar,adicionar:pgAdicionar,ajustes:pgAjustes}[page];
+  document.getElementById('hdrSum').textContent = textoTopo();
+  const fn={caderno:pgCaderno,frases:pgFrases,falsos:pgFalsos,revisar:pgRevisar,adicionar:pgAdicionar,ajustes:pgAjustes}[page];
   document.getElementById('page').innerHTML=fn();
   if(page==='adicionar' && !ED) setTimeout(()=>{ const e=document.getElementById('f_es'); if(e && matchMedia('(hover:hover)').matches) e.focus(); },0);
 }
@@ -382,13 +529,13 @@ function ouvirTodas(btn){
 function salvarFrase(){
   const es=document.getElementById('f_fes').value.trim(), pt=document.getElementById('f_fpt').value.trim();
   if(!es){ toast('Escreva ou dite a frase em espanhol'); return; }
-  if(EDF){ Object.assign(frase(EDF),{es,pt}); EDF=null; toast('Frase atualizada ✓'); }
-  else{ D.frases.push({id:uid(),es,pt,criado:new Date().toISOString()}); toast('Frase adicionada ✓'); }
+  if(EDF){ Object.assign(frase(EDF),{es,pt,atualizado:agora()}); EDF=null; toast('Frase atualizada ✓'); }
+  else{ D.frases.push({id:uid(),es,pt,criado:agora(),atualizado:agora()}); toast('Frase adicionada ✓'); }
   save(); render();
 }
 function editarFrase(id){ EDF=id; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 function excluirFrase(id){
-  pedir('Excluir esta frase?',()=>{ D.frases=D.frases.filter(f=>f.id!==id); EDF=null; save(); render(); toast('Excluída'); },'Excluir');
+  pedir('Excluir esta frase?',()=>{ D.frases=D.frases.filter(f=>f.id!==id); apagar(id); EDF=null; save(); render(); toast('Excluída'); },'Excluir');
 }
 // ouve a pessoa repetindo a frase e marca as palavras que reconheceu (verde) ou não (vermelho)
 function treinarFrase(id,btn){
@@ -403,6 +550,43 @@ function treinarFrase(id,btn){
     res.innerHTML = (certas===alvo.length ? '<b style="color:var(--verde-m)">¡Perfecto! 🎉</b><br>' : `<span class="muted">Entendi ${certas} de ${alvo.length} palavras. Em vermelho, o que não reconheci:</span><br>`)
       + marcadas.join(' ') + `<div class="muted" style="margin-top:4px">Você disse: “${esc(t)}”</div>`;
   });
+}
+
+/* ============================================================
+   PÁGINA: FALSOS AMIGOS
+   ============================================================ */
+function pgFalsos(){
+  return `<div class="sec-t">Falsos amigos</div>
+  <div class="sec-s">Palavras que parecem português mas querem dizer outra coisa. Toque em <b>+ Caderno</b> para incluir uma na sua revisão.</div>
+  <input class="inp" placeholder="🔎 Buscar (ex.: borracha, polvo…)" value="${esc(buscaFA)}" oninput="buscaFA=this.value;renderFalsos()">
+  <div style="height:12px"></div>
+  <div id="listaFA">${falsosHtml()}</div>`;
+}
+function renderFalsos(){ document.getElementById('listaFA').innerHTML=falsosHtml(); }
+function noCaderno(es){ return D.itens.some(i=>sem(i.es)===sem(es)); }
+function falsosHtml(){
+  const q=sem(buscaFA.trim());
+  const lista=FALSOS.map((f,k)=>Object.assign({k},f))
+    .filter(f=>!q||sem([f.es,f.sig,f.parece,f.certo].join(' ')).includes(q))
+    .sort((a,b)=>a.es.localeCompare(b.es,'es'));
+  if(!lista.length) return `<div class="empty">Nada encontrado.</div>`;
+  return `<div class="muted" style="margin:0 2px 8px">${lista.length} palavra${lista.length>1?'s':''}</div>`+lista.map(f=>`<div class="item">
+    <div class="item-top">
+      <div style="flex:1;min-width:0"><div class="es">${esc(f.es)}</div><div class="pt">= ${esc(f.sig)}</div></div>
+      <button class="ico" onclick="falar(FALSOS[${f.k}].es)" title="Ouvir">🔊</button>
+    </div>
+    ${f.parece?`<div class="fa-trap">⚠️ Não é <b>${esc(f.parece)}</b>. Isso, em espanhol, se diz <b>${esc(f.certo)}</b>.</div>`:''}
+    <div class="ex">“${esc(f.ex)}”</div>
+    <div class="item-meta">${noCaderno(f.es)
+      ? '<span class="muted">✓ no seu caderno</span>'
+      : `<button class="btn sec sm" onclick="falsoParaCaderno(${f.k})">+ Caderno</button>`}</div>
+  </div>`).join('');
+}
+function falsoParaCaderno(k){
+  const f=FALSOS[k];
+  const nota = f.parece ? `Falso amigo! Não é “${f.parece}” (isso é “${f.certo}”).` : 'Falso amigo!';
+  D.itens.push(novoItem(f.es,f.sig,f.ex,nota,'Vocabulário')); save();
+  render(); toast('Foi para o caderno ✓');
 }
 
 /* ============================================================
@@ -478,6 +662,7 @@ function responder(sabia){
     if(!R.treino){
       i.nivel = sabia ? Math.min(i.nivel+1,NIVEL_MAX) : 0;
       i.prox = somaDias(hoje(), INTERVALOS[i.nivel]);
+      i.atualizado = agora();
       save();
     }
   }
@@ -536,14 +721,14 @@ function escolherCat(btn){
   document.querySelectorAll('#f_cat .fchip').forEach(b=>b.classList.remove('active'));
   if(!on) btn.classList.add('active');
 }
-function novoItem(es,pt,ex,nota,cat){ return {id:uid(),es,pt,ex,nota,cat,nivel:0,prox:hoje(),criado:new Date().toISOString()}; }
+function novoItem(es,pt,ex,nota,cat){ return {id:uid(),es,pt,ex,nota,cat,nivel:0,prox:hoje(),criado:agora(),atualizado:agora()}; }
 function salvar(outra){
   const v=k=>document.getElementById('f_'+k).value.trim();
   const es=v('es'), pt=v('pt'), ex=v('ex'), nota=v('nota');
   const sel=document.querySelector('#f_cat .fchip.active'), cat=sel?sel.textContent:'';
   if(!es||!pt){ toast('Preencha o espanhol e o português'); return; }
   if(ED){
-    Object.assign(item(ED),{es,pt,ex,nota,cat}); ED=null; save(); toast('Anotação atualizada ✓'); go('caderno');
+    Object.assign(item(ED),{es,pt,ex,nota,cat,atualizado:agora()}); ED=null; save(); toast('Anotação atualizada ✓'); go('caderno');
     return;
   }
   const dup=D.itens.find(i=>sem(i.es)===sem(es));
@@ -568,14 +753,154 @@ function adicionarLote(){
 function editar(id){ ED=id; go('adicionar'); }
 function excluir(id){
   const i=item(id);
-  pedir(`Excluir “${i.es}” do caderno?`,()=>{ D.itens=D.itens.filter(x=>x.id!==id); ED=null; save(); toast('Excluída'); go('caderno'); },'Excluir');
+  pedir(`Excluir “${i.es}” do caderno?`,()=>{ D.itens=D.itens.filter(x=>x.id!==id); apagar(id); ED=null; save(); toast('Excluída'); go('caderno'); },'Excluir');
 }
+
+/* ============================================================
+   SINCRONIZAÇÃO (computador ⇄ celular)
+   os dados ficam num gist privado da conta do GitHub; cada aparelho
+   junta a sua cópia com a de lá, item por item, ficando com a versão
+   mais recente de cada um. Nada é substituído por inteiro.
+   ============================================================ */
+const GIST_ARQ = 'caderno-espanhol.json';
+let SY = {estado:'off', quando:'', msg:''}, _syncT=null, _syncRodando=false, _syncDeNovo=false;
+
+function syncCfg(){ try{ return JSON.parse(localStorage.getItem(KEY+'_sync'))||null; }catch(e){ return null; } }
+function setSyncCfg(c){ try{ c ? localStorage.setItem(KEY+'_sync',JSON.stringify(c)) : localStorage.removeItem(KEY+'_sync'); }catch(e){} }
+function textoTopo(){
+  const n=D.itens.length, due=paraHoje().length;
+  return (n ? `${n} anotaç${n>1?'ões':'ão'} · ${due?due+' para revisar hoje':'revisão em dia ✓'}` : 'comece anotando o que aprendeu') + iconeSync();
+}
+function iconeSync(){
+  if(!syncCfg()) return '';
+  return {ok:' · ☁️ sincronizado', sinc:' · ☁️ sincronizando…', erro:' · ⚠️ sem sincronizar', off:' · ☁️'}[SY.estado]||'';
+}
+function marcarSync(estado,msg){
+  SY.estado=estado; SY.msg=msg||'';
+  if(estado==='ok') SY.quando=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('hdrSum').textContent = textoTopo();
+  const el=document.getElementById('syncStatus'); if(el) el.innerHTML=statusSyncHtml();
+}
+async function gh(caminho, token, opt){
+  const r = await fetch('https://api.github.com'+caminho, Object.assign({cache:'no-store'}, opt||{}, {
+    headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token,'Content-Type':'application/json'}}));
+  if(r.status===401) throw new Error('chave');
+  if(!r.ok) throw new Error('GitHub respondeu '+r.status);
+  return r.json();
+}
+function dadosParaNuvem(d){
+  const porId=(a,b)=>a.id<b.id?-1:a.id>b.id?1:0;
+  return {versao:1, itens:d.itens.slice().sort(porId), frases:d.frases.slice().sort(porId),
+    apagados:Object.fromEntries(Object.entries(d.apagados||{}).sort()), importadas:(d.importadas||[]).slice().sort()};
+}
+function carimbo(x){ return x.atualizado||x.criado||''; }
+// junta duas cópias: de cada item fica a versão mais recente; o que foi excluído em qualquer lado sai
+function mesclar(a,b){
+  const ap=Object.assign({}, b.apagados||{});
+  Object.entries(a.apagados||{}).forEach(([id,t])=>{ if(!ap[id]||t>ap[id]) ap[id]=t; });
+  const junta=(x,y)=>{
+    const m=new Map();
+    [...(x||[]),...(y||[])].forEach(i=>{ const o=m.get(i.id); if(!o||carimbo(i)>carimbo(o)) m.set(i.id,i); });
+    return [...m.values()].filter(i=>!(ap[i.id] && ap[i.id]>=carimbo(i)));
+  };
+  return Object.assign({}, a, {itens:junta(a.itens,b.itens), frases:junta(a.frases,b.frases), apagados:ap,
+    importadas:[...new Set([...(a.importadas||[]),...(b.importadas||[])])]});
+}
+async function lerGist(cfg){
+  const g=await gh('/gists/'+cfg.gist, cfg.token);
+  const f=g.files && g.files[GIST_ARQ];
+  if(!f) return {itens:[],frases:[],apagados:{},importadas:[]};
+  const txt = f.truncated ? await (await fetch(f.raw_url,{cache:'no-store'})).text() : f.content;
+  return JSON.parse(txt||'{}');
+}
+async function gravarGist(cfg, dados){
+  await gh('/gists/'+cfg.gist, cfg.token, {method:'PATCH', body:JSON.stringify({files:{[GIST_ARQ]:{content:JSON.stringify(dados)}}})});
+}
+function agendarSync(){ if(!syncCfg()) return; clearTimeout(_syncT); _syncT=setTimeout(sincronizar,1500); }
+async function sincronizar(){
+  const cfg=syncCfg(); if(!cfg) return;
+  if(_syncRodando){ _syncDeNovo=true; return; }
+  _syncRodando=true; marcarSync('sinc');
+  try{
+    const remoto=await lerGist(cfg);
+    const antes=JSON.stringify(dadosParaNuvem(D));
+    D=mesclar(D,remoto);
+    const depois=dadosParaNuvem(D), txt=JSON.stringify(depois);
+    try{ localStorage.setItem(KEY, JSON.stringify(D)); }catch(e){}
+    if(txt!==JSON.stringify(dadosParaNuvem(Object.assign({apagados:{},importadas:[],itens:[],frases:[]},remoto)))) await gravarGist(cfg, depois);
+    marcarSync('ok');
+    // só redesenha se chegou algo novo e a pessoa não está digitando nem no meio de uma revisão
+    const ativo=document.activeElement;
+    if(txt!==antes && !R && !(ativo && /INPUT|TEXTAREA/.test(ativo.tagName))) render();
+  }catch(e){
+    marcarSync('erro', e.message==='chave' ? 'A chave do GitHub não funcionou (pode ter expirado). Desligue e conecte de novo.'
+      : !navigator.onLine ? 'Sem internet. Quando voltar, eu sincronizo.'
+      : e instanceof TypeError ? 'Não consegui falar com o GitHub agora. Tento de novo mais tarde.' : e.message);
+  }finally{
+    _syncRodando=false;
+    if(_syncDeNovo){ _syncDeNovo=false; agendarSync(); }
+  }
+}
+async function conectarSync(){
+  const token=document.getElementById('f_token').value.trim();
+  if(!token){ toast('Cole a chave do GitHub'); return; }
+  const btn=document.getElementById('btnConectar'); btn.disabled=true; btn.textContent='Conectando…';
+  try{
+    // procura um gist do caderno já criado em outro aparelho; se não houver, cria
+    let gist=null;
+    for(let pg=1; pg<=5 && !gist; pg++){
+      const lista=await gh('/gists?per_page=100&page='+pg, token);
+      gist=(lista.find(g=>g.files && g.files[GIST_ARQ])||{}).id || null;
+      if(lista.length<100) break;
+    }
+    if(!gist){
+      const g=await gh('/gists', token, {method:'POST', body:JSON.stringify({description:'Caderno de Espanhol (dados do app, não apagar)', public:false,
+        files:{[GIST_ARQ]:{content:JSON.stringify(dadosParaNuvem(D))}}})});
+      gist=g.id;
+    }
+    setSyncCfg({token, gist});
+    await sincronizar();
+    if(SY.estado==='ok') toast('Sincronização ligada ☁️');
+    render();
+  }catch(e){
+    toast(e.message==='chave' ? 'Essa chave não funcionou' : 'Não consegui conectar');
+    btn.disabled=false; btn.textContent='Conectar';
+  }
+}
+function desconectarSync(){
+  pedir('Desligar a sincronização neste aparelho? As anotações continuam aqui e na nuvem.',()=>{ setSyncCfg(null); SY={estado:'off',quando:'',msg:''}; render(); },'Desligar');
+}
+function statusSyncHtml(){
+  if(SY.estado==='sinc') return '☁️ Sincronizando…';
+  if(SY.estado==='erro') return `<span style="color:#9a4a40">⚠️ ${esc(SY.msg)}</span>`;
+  if(SY.estado==='ok') return `✓ Sincronizado às ${SY.quando}`;
+  return '☁️ Ligada';
+}
+window.addEventListener('online', agendarSync);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') agendarSync(); });
 
 /* ============================================================
    PÁGINA: AJUSTES
    ============================================================ */
 function pgAjustes(){
-  return `<div class="sec-t">Backup</div>
+  const cfg=syncCfg();
+  const sync = cfg ? `<div class="card">
+    <div id="syncStatus" style="font-size:14px;margin-bottom:10px">${statusSyncHtml()}</div>
+    <div class="muted" style="margin-bottom:10px">Tudo que você anotar aqui aparece nos outros aparelhos conectados, e vice-versa. Funciona também sem internet: quando voltar, eu junto as mudanças.</div>
+    <div class="row wrap"><button class="btn" onclick="sincronizar()">Sincronizar agora</button><button class="btn sec" onclick="desconectarSync()">Desligar neste aparelho</button></div>
+  </div>` : `<div class="card">
+    <div class="muted" style="margin-bottom:10px;line-height:1.6">Use no computador e no celular com as mesmas anotações. Elas ficam guardadas num arquivo privado da sua conta do GitHub. Faça isso <b>uma vez em cada aparelho</b>, com a mesma chave:</div>
+    <ol class="muted" style="margin:0 0 12px 18px;line-height:1.7">
+      <li>Abra <a href="https://github.com/settings/tokens/new?scopes=gist&description=Caderno%20de%20Espanhol" target="_blank" rel="noopener">este link do GitHub</a> (já vem com a opção certa marcada: <b>gist</b>).</li>
+      <li>Em <b>Expiration</b>, escolha <b>No expiration</b>.</li>
+      <li>Clique em <b>Generate token</b> e copie o código que começa com <b>ghp_</b>.</li>
+      <li>Cole aqui e toque em <b>Conectar</b>. Guarde o código para colar no outro aparelho.</li>
+    </ol>
+    <input class="inp" id="f_token" placeholder="ghp_…" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="row" style="margin-top:10px"><button class="btn" id="btnConectar" onclick="conectarSync()">Conectar</button></div>
+  </div>`;
+  return `<div class="sec-t">Computador e celular</div>${sync}
+  <div class="sec-t" style="margin-top:22px">Backup</div>
   <div class="card">
     <div class="muted" style="margin-bottom:10px">As anotações ficam salvas neste navegador. Copie o backup para guardar ou levar para outro aparelho.</div>
     <div class="row wrap"><button class="btn" onclick="copiar(JSON.stringify(D),'Backup copiado 📋')">Copiar backup</button>
@@ -603,6 +928,7 @@ if('speechSynthesis' in window){
   speechSynthesis.onvoiceschanged=()=>{ const a=document.getElementById('avisoVoz'); if(a) a.innerHTML=avisoVoz(); };
 }
 load(); render();
+if(syncCfg()) sincronizar();
 
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
   window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
